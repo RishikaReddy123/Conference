@@ -7,63 +7,78 @@ public class ConferencePlanner {
     private List<Talk> allTalks;
     private List<Track> tracks;
 
-    public ConferencePlanner(List<Talk> talks){
+    public ConferencePlanner(List<Talk> talks) {
         this.allTalks = talks;
         this.tracks = new ArrayList<>();
     }
 
-    public List<Track> getTracks(){
+    public List<Track> getTracks() {
         return tracks;
     }
 
-    public void planConference(){
+    public void planConference() {
         tracks = new ArrayList<>();
         int trackId = 1;
-        Track currentTrack = new Track(trackId);
-        tracks.add(currentTrack);
+        List<Talk> unscheduledTalks = new ArrayList<>(allTalks);
 
-        for(Talk talk: allTalks){
-            if(!currentTrack.addTalkToMorningSession(talk)){
-                if(!currentTrack.addTalkToAfternoonSession(talk)){
-                    trackId++;
-                    currentTrack = new Track(trackId);
-                    tracks.add(currentTrack);
-                    if(!currentTrack.addTalkToMorningSession(talk)){
-                        currentTrack.addTalkToAfternoonSession(talk);
-                    }
+        while (!unscheduledTalks.isEmpty()) {
+            Track currentTrack = new Track(trackId++);
+            boolean trackFilled = false;
+
+            List<Talk> remainingTalks = new ArrayList<>();
+
+            for (Talk talk : unscheduledTalks) {
+                boolean scheduled = false;
+
+                if (currentTrack.getMorningSession().canAdd(talk)) {
+                    currentTrack.getMorningSession().addTalk(talk);
+                    scheduled = true;
+                }
+
+                else if (currentTrack.getAfternoonSession().canAdd(talk)) {
+                    currentTrack.getAfternoonSession().addTalk(talk);
+                    scheduled = true;
+                }
+
+                if (!scheduled) {
+                    remainingTalks.add(talk);
                 }
             }
+
+            if (currentTrack.getMorningSession().getTalks().size() > 0 || currentTrack.getAfternoonSession().getTalks().size() > 0) {
+                tracks.add(currentTrack);
+            }
+
+            unscheduledTalks = remainingTalks;
         }
     }
-    public void printTracks(){
+
+
+
+    public static void printTracks(List<Track> tracks) {
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("hh:mma");
-        for(Track track : tracks){
+
+        for (Track track : tracks) {
             System.out.println("Track " + track.getTrackId() + ":");
-
             LocalTime time = LocalTime.of(9, 0);
-            for(Talk talk : track.getMorningSession().getTalks()){
-                System.out.print(time.format(timeFormatter));
-                System.out.print(" ");
-                System.out.print(talk);
-                System.out.println();
-                time = time.plusMinutes(talk.getDuration());
-            }
 
-            for(Talk talk : track.getAfternoonSession().getTalks()){
-                System.out.print(time.format(timeFormatter));
-                System.out.print(" ");
-                System.out.print(talk);
-                System.out.println();
-                time = time.plusMinutes(talk.getDuration());
-            }
+            time = printSession(track.getMorningSession().getTalks(), time, timeFormatter);
+            time = printSession(track.getAfternoonSession().getTalks(), time, timeFormatter);
 
-            LocalTime networkingTime = time;
-            if(networkingTime.isBefore(LocalTime.of(16, 0))){
-                networkingTime = LocalTime.of(16, 0);
-            } else if (networkingTime.isAfter(LocalTime.of(17, 0))) {
-                networkingTime = LocalTime.of(17, 0);
-            }
+            LocalTime networkingTime = time.isBefore(LocalTime.of(16, 0)) ?
+                    LocalTime.of(16, 0) :
+                    time.isAfter(LocalTime.of(17, 0)) ?
+                            LocalTime.of(17, 0) : time;
+
             System.out.println(networkingTime.format(timeFormatter) + " Networking Event");
         }
+    }
+
+    private static LocalTime printSession(List<Talk> talks, LocalTime startTime, DateTimeFormatter formatter) {
+        for (Talk talk : talks) {
+            System.out.println(startTime.format(formatter) + " " + talk);
+            startTime = startTime.plusMinutes(talk.getDuration());
+        }
+        return startTime;
     }
 }

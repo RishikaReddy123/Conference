@@ -1,36 +1,32 @@
 public class TalkParser {
-    public static Talk parseLine(String line){
+    public static Talk parseLine(String line) {
         line = line.trim();
 
-        if (line.toLowerCase().contains("lightning")) {
-            String title = line.replace("lightning", "").trim();
+        if (line.toLowerCase().endsWith("lightning")) {
+            String title = line.substring(0, line.toLowerCase().lastIndexOf("lightning")).trim();
             return new Talk(title, 5);
         }
 
-
-        int lasthyphenindex = line.lastIndexOf("-");
-
-        if((lasthyphenindex == -1) || lasthyphenindex == line.length()-1){
+        int lastHyphenIndex = line.lastIndexOf("-");
+        if (lastHyphenIndex == -1 || lastHyphenIndex == line.length() - 1) {
             System.err.println("Invalid line format: " + line);
             return null;
         }
 
-        String title = line.substring(0, lasthyphenindex).trim();
-        String durPart = line.substring(lasthyphenindex + 1).trim();
+        String title = line.substring(0, lastHyphenIndex).trim();
+        String durPart = line.substring(lastHyphenIndex + 1).trim();
 
-        if(durPart.equalsIgnoreCase("lightning")){
-            return new Talk(title, 5);
-        }else if(durPart.endsWith("min")){
-            try{String numStr = durPart.substring(0, durPart.length()-3).trim();
-                int duration = Integer.parseInt(numStr);
+        if (durPart.endsWith("min")) {
+            try {
+                int duration = Integer.parseInt(durPart.replace("min", "").trim());
                 return new Talk(title, duration);
-            }catch(NumberFormatException e){
-                System.err.println("Invalid duration format: " + durPart + "in line: " + line);
-                return null;
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid duration format: " + durPart + " in line: " + line);
             }
-        }else {
-            System.err.println("Unknown duration format: " + durPart + "in line: " + line);
-            return null;
+        } else {
+            System.err.println("Unknown duration format: " + durPart + " in line: " + line);
         }
+        return null;
     }
 }
+

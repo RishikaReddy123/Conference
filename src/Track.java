@@ -3,29 +3,35 @@ public class Track {
     private Session morningSession;
     private Session afternoonSession;
 
-    public Track(int trackId){
+    public Track(int trackId) {
         this.trackId = trackId;
         this.morningSession = new Session(180);
-        this.afternoonSession = new Session(180);
+        this.afternoonSession = new Session(240);
     }
 
-    public int getTrackId(){
+    public int getTrackId() {
         return this.trackId;
     }
 
-    public boolean addTalkToMorningSession(Talk talk){
-        return morningSession.addTalk(talk);
+    public boolean addTalk(Talk talk) {
+        if (morningSession.canAdd(talk)) {
+            return morningSession.addTalk(talk);
+        } else if (afternoonSession.canAdd(talk)) {
+            return afternoonSession.addTalk(talk);
+        }
+        return false;
     }
 
-    public boolean addTalkToAfternoonSession(Talk talk){
-        return afternoonSession.addTalk(talk);
-    }
-
-    public Session getMorningSession(){
+    public Session getMorningSession() {
         return morningSession;
     }
 
-    public Session getAfternoonSession(){
+    public Session getAfternoonSession() {
         return afternoonSession;
     }
+
+    public boolean hasSpaceFor(Talk talk) {
+        return morningSession.canAdd(talk) || afternoonSession.canAdd(talk);
+    }
 }
+
